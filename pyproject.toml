@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "pyspark-types"
+version = "0.1.0"
+description = ""
+authors = ["Dan"]
+readme = "README.md"
+packages = [{include = "pyspark-types"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pyspark = "^3.3.2"
+pytest = "^7.2.1"
+black = "^23.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
