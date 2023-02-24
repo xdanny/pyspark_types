@@ -1,3 +1,5 @@
+import datetime
+
 from pyspark.sql.types import (
     StructType,
     StructField,
@@ -10,9 +12,12 @@ from pyspark.sql.types import (
     LongType,
     DataType,
     ShortType,
-    ByteType
+    ByteType,
+    MapType,
+    DateType,
+    TimestampType
 )
-from typing import Type, get_type_hints, Union
+from typing import Type, get_type_hints, Union, Any
 from dataclasses import is_dataclass, fields
 
 class LongT:
@@ -78,10 +83,25 @@ def map_dataclass_to_struct(dataclass_type: Type) -> StructType:
                 nullable = is_field_nullable(field_name, hints)
                 fields_list.append(StructField(field_name, ArrayType(sub_struct), nullable))
             else:
-                # Handle lists of primitive types
+                # Handle lists of primitive types and dicts
                 spark_type = get_spark_type(elem_type)
                 nullable = is_field_nullable(field_name, hints)
-                fields_list.append(StructField(field_name, spark_type, nullable))
+                if spark_type == MapType(StringType(), StringType()):
+                    # Special case for dictionaries with any value type
+                    fields_list.append(StructField(field_name, spark_type, nullable))
+                else:
+                    fields_list.append(StructField(field_name, ArrayType(spark_type), nullable))
+        elif hasattr(field_type, "__origin__") and field_type.__origin__ is dict:
+            # Handle dictionaries
+            key_type, value_type = field_type.__args__
+            if is_dataclass(value_type):
+                sub_struct = map_dataclass_to_struct(value_type)
+                nullable = is_field_nullable(field_name, hints)
+                fields_list.append(StructField(field_name, MapType(get_spark_type(key_type), sub_struct), nullable))
+            else:
+                spark_type = get_spark_type(value_type)
+                nullable = is_field_nullable(field_name, hints)
+                fields_list.append(StructField(field_name, MapType(get_spark_type(key_type), spark_type), nullable))
         else:
             # Handle primitive types and BoundDecimal custom type
             spark_type = get_spark_type(field_type)
@@ -90,6 +110,39 @@ def map_dataclass_to_struct(dataclass_type: Type) -> StructType:
 
     return StructType(fields_list)
 
+
+def get_spark_type(py_type: Type) -> DataType:
+    """
+    Creates a mapping from a python type to a pyspark data type
+    :param py_type:
+    :return:
+    """
+    if py_type == str:
+        return StringType()
+    elif py_type == int:
+        return IntegerType()
+    elif py_type == LongT:
+        return LongType()
+    elif py_type == ShortT:
+        return ShortType()
+    elif py_type == ByteT:
+        return ByteType()
+    elif py_type == float:
+        return DoubleType()
+    elif py_type == datetime.datetime:
+        return TimestampType()
+    elif py_type == datetime.date:
+        return DateType()
+    elif py_type == bool:
+        return BooleanType()
+    elif isinstance(py_type, type) and issubclass(py_type, BoundDecimal):
+        return DecimalType(precision=py_type.precision, scale=py_type.scale)
+    elif is_optional_type(py_type):
+        elem_type = py_type.__args__[0]
+        spark_type = get_spark_type(elem_type)
+        return spark_type
+    else:
+        raise Exception(f"Type {py_type} is not supported by PySpark")
 
 def is_field_nullable(field_name: str, hints: dict) -> bool:
     """

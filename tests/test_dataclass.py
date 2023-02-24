@@ -1,5 +1,5 @@
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, LongType, DecimalType, ArrayType
-from typing import List, Optional
+from typing import List, Optional, Dict
 from dataclasses import dataclass
 
 from pyspark_types.dataclass import map_dataclass_to_struct, create_bound_decimal_type, LongT
@@ -17,7 +17,6 @@ class OuterDataClass:
     field1: int
     field2: Optional[str]
     field3: List[InnerDataClass]
-
 
 def test_map_simple_dataclass():
     expected_struct = StructType([
