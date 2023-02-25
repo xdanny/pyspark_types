@@ -1,8 +1,11 @@
-from pyspark.sql.types import Row, BooleanType, StructType, StructField, StringType, DoubleType, LongType, ArrayType
+from pyspark.sql.types import DecimalType, Row, BooleanType, StructType, StructField, StringType, DoubleType, LongType, ArrayType
 from typing import List, Optional
+from pyspark_types.auxiliary import create_bound_decimal_type
 
 from pyspark_types.dataclass import LongT
 from pyspark_types.pydantic import PySparkBaseModel
+
+decimal = create_bound_decimal_type(10, 2)
 
 class Person(PySparkBaseModel):
     name: Optional[str]
@@ -10,7 +13,7 @@ class Person(PySparkBaseModel):
     height: float
     is_employed: bool
     salary: float
-    decimal: float
+    decimal: decimal
     addresses: List[str]
 
 
@@ -23,7 +26,7 @@ def test_person_spark_schema():
         StructField("height", DoubleType(), False),
         StructField("is_employed", BooleanType(), False),
         StructField("salary", DoubleType(), False),
-        StructField("decimal", DoubleType(), False),
+        StructField("decimal", DecimalType(10, 2), False),
         StructField("addresses", ArrayType(StringType(), True), False)
     ])
     assert schema == expected_schema
@@ -38,7 +41,7 @@ def test_person_to_spark_row():
     assert row["height"] == 5.5
     assert row["is_employed"] == True
     assert row["salary"] == 10000.00
-    assert row["decimal"] == 2.5
+    assert row["decimal"] == decimal('2.5')
     assert row["addresses"] == ["123 Main St", "456 Oak St"]
 
 
@@ -48,7 +51,7 @@ def test_person_from_spark_row():
               height=5.5,
               is_employed=True,
               salary=10000.0,
-              decimal=2.5,
+              decimal=decimal('2.5'),
               addresses=['123 Main St', '456 Oak St'])
 
     person = Person.from_row(row)
