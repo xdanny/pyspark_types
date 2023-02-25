@@ -17,43 +17,9 @@ from pyspark.sql.types import (
     DateType,
     TimestampType
 )
-from typing import Type, get_type_hints, Union, Any
+from typing import Type, get_type_hints, Union
 from dataclasses import is_dataclass, fields
-
-class LongT:
-    pass
-
-class ShortT:
-    pass
-
-class ByteT:
-    pass
-
-class BoundDecimal:
-    """
-    Custom data type that represents a decimal with a specific scale and precision.
-    """
-
-    def __init__(self, precision: int, scale: int):
-        self.precision = precision
-        self.scale = scale
-
-    def __repr__(self) -> str:
-        return f"BoundDecimal(precision={self.precision}, scale={self.scale})"
-
-
-def create_bound_decimal_type(precision: int, scale: int) -> Type[BoundDecimal]:
-    """
-    Factory method that creates a new BoundDecimal type with the specified precision and scale.
-    """
-    class _BoundDecimal(BoundDecimal):
-        pass
-
-    _BoundDecimal.__name__ = f"BoundDecimal_{precision}_{scale}"
-    _BoundDecimal.precision = precision
-    _BoundDecimal.scale = scale
-
-    return _BoundDecimal
+from pyspark_types.auxiliary import LongT, ShortT, ByteT, BoundDecimal
 
 def map_dataclass_to_struct(dataclass_type: Type) -> StructType:
     """

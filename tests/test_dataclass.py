@@ -1,8 +1,9 @@
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, LongType, DecimalType, ArrayType
-from typing import List, Optional, Dict
+from typing import List, Optional
 from dataclasses import dataclass
 
-from pyspark_types.dataclass import map_dataclass_to_struct, create_bound_decimal_type, LongT
+from pyspark_types.dataclass import map_dataclass_to_struct, LongT
+from pyspark_types.auxiliary import create_bound_decimal_type
 
 decimal = create_bound_decimal_type(10, 2)
 
