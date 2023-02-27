@@ -15,45 +15,12 @@ from pyspark.sql.types import (
     ByteType,
     MapType,
     DateType,
-    TimestampType
+    TimestampType,
 )
-from typing import Type, get_type_hints, Union, Any
+from typing import Type, get_type_hints, Union
 from dataclasses import is_dataclass, fields
+from pyspark_types.auxiliary import LongT, ShortT, ByteT, BoundDecimal
 
-class LongT:
-    pass
-
-class ShortT:
-    pass
-
-class ByteT:
-    pass
-
-class BoundDecimal:
-    """
-    Custom data type that represents a decimal with a specific scale and precision.
-    """
-
-    def __init__(self, precision: int, scale: int):
-        self.precision = precision
-        self.scale = scale
-
-    def __repr__(self) -> str:
-        return f"BoundDecimal(precision={self.precision}, scale={self.scale})"
-
-
-def create_bound_decimal_type(precision: int, scale: int) -> Type[BoundDecimal]:
-    """
-    Factory method that creates a new BoundDecimal type with the specified precision and scale.
-    """
-    class _BoundDecimal(BoundDecimal):
-        pass
-
-    _BoundDecimal.__name__ = f"BoundDecimal_{precision}_{scale}"
-    _BoundDecimal.precision = precision
-    _BoundDecimal.scale = scale
-
-    return _BoundDecimal
 
 def map_dataclass_to_struct(dataclass_type: Type) -> StructType:
     """
@@ -81,7 +48,9 @@ def map_dataclass_to_struct(dataclass_type: Type) -> StructType:
                 # Handle lists of data classes
                 sub_struct = map_dataclass_to_struct(elem_type)
                 nullable = is_field_nullable(field_name, hints)
-                fields_list.append(StructField(field_name, ArrayType(sub_struct), nullable))
+                fields_list.append(
+                    StructField(field_name, ArrayType(sub_struct), nullable)
+                )
             else:
                 # Handle lists of primitive types and dicts
                 spark_type = get_spark_type(elem_type)
@@ -90,18 +59,32 @@ def map_dataclass_to_struct(dataclass_type: Type) -> StructType:
                     # Special case for dictionaries with any value type
                     fields_list.append(StructField(field_name, spark_type, nullable))
                 else:
-                    fields_list.append(StructField(field_name, ArrayType(spark_type), nullable))
+                    fields_list.append(
+                        StructField(field_name, ArrayType(spark_type), nullable)
+                    )
         elif hasattr(field_type, "__origin__") and field_type.__origin__ is dict:
             # Handle dictionaries
             key_type, value_type = field_type.__args__
             if is_dataclass(value_type):
                 sub_struct = map_dataclass_to_struct(value_type)
                 nullable = is_field_nullable(field_name, hints)
-                fields_list.append(StructField(field_name, MapType(get_spark_type(key_type), sub_struct), nullable))
+                fields_list.append(
+                    StructField(
+                        field_name,
+                        MapType(get_spark_type(key_type), sub_struct),
+                        nullable,
+                    )
+                )
             else:
                 spark_type = get_spark_type(value_type)
                 nullable = is_field_nullable(field_name, hints)
-                fields_list.append(StructField(field_name, MapType(get_spark_type(key_type), spark_type), nullable))
+                fields_list.append(
+                    StructField(
+                        field_name,
+                        MapType(get_spark_type(key_type), spark_type),
+                        nullable,
+                    )
+                )
         else:
             # Handle primitive types and BoundDecimal custom type
             spark_type = get_spark_type(field_type)
@@ -144,6 +127,7 @@ def get_spark_type(py_type: Type) -> DataType:
     else:
         raise Exception(f"Type {py_type} is not supported by PySpark")
 
+
 def is_field_nullable(field_name: str, hints: dict) -> bool:
     """
     Returns True if the given field name is nullable, based on the type hint for the field in the given hints dictionary.
@@ -164,7 +148,7 @@ def apply_nullability(dtype: DataType, is_nullable: bool) -> DataType:
         if isinstance(dtype, StructType):
             # Wrap the nullable field in a struct with a single field
             return StructType([StructField("value", dtype, True)])
-        elif hasattr(dtype, 'add_nullable'):
+        elif hasattr(dtype, "add_nullable"):
             return dtype.add_nullable()
         else:
             raise TypeError(f"Type {dtype} does not support nullability")
