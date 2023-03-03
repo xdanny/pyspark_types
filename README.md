@@ -12,9 +12,10 @@ Here's an example of a Pydantic model that will be used to create a PySpark Data
 ```python
 from pydantic import BaseModel
 from pyspark_types.auxiliary import BoundDecimal
+from pyspark_types.pydantic import PySparkBaseModel
 
 
-class Person(BaseModel):
+class Person(PySparkBaseModel):
     name: str
     age: int
     addresses: dict[str, str]
@@ -26,7 +27,6 @@ To create a PySpark DataFrame from a list of Person Pydantic models, we can use 
 
 ```python
 from pyspark.sql import SparkSession
-from pyspark_types.pydantic import PySparkBaseModel
 
 
 spark = SparkSession.builder.appName("MyApp").getOrCreate()
