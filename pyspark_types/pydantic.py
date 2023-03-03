@@ -1,9 +1,11 @@
 import typing
-from typing import Type, Union, get_type_hints, get_origin, get_args, Generic
+from typing import Type, Union, get_type_hints, get_origin, get_args, List
 from pydantic import BaseModel
 from pyspark.sql.types import *
 from pyspark_types.dataclass import is_field_nullable, is_optional_type
 from pyspark_types.auxiliary import LongT, ShortT, ByteT, BoundDecimal
+from pyspark.sql import SparkSession, DataFrame
+from decimal import Decimal
 
 
 class PySparkBaseModel(BaseModel):
@@ -16,20 +18,22 @@ class PySparkBaseModel(BaseModel):
         validate_assignment = True
         validate_all = True
 
-    # def to_row(self):
-    #     return Row(**self.dict())
-    #
-    # @classmethod
-    # def from_row(cls, row):
-    #     data = row.asDict()
-    #     return cls(**data)
-    #
-    # def dict(self, *args, **kwargs):
-    #     return super().dict(*args, **kwargs, by_alias=True, exclude_unset=True)
-    #
-    # @classmethod
-    # def from_dict(cls, data):
-    #     return cls(**data)
+
+    def dict(self, *args, **kwargs):
+        """
+        Override Pydantic's dict() method to return a dictionary with PySparkBaseModel field values
+        instead of Pydantic field values
+        """
+        result = super().dict(*args, **kwargs)
+        new_result = {}
+        for k, v in result.items():
+            if isinstance(v, PySparkBaseModel):
+                new_result[k] = v.dict()
+            elif isinstance(v, BoundDecimal):
+                new_result[k] = Decimal(v)
+            else:
+                new_result[k] = v
+        return new_result
 
     @classmethod
     def is_pyspark_basemodel_type(cls, t: Type) -> bool:
@@ -203,3 +207,24 @@ class PySparkBaseModel(BaseModel):
             spark_type = cls.get_spark_type(elem_type)
             return spark_type
         raise Exception(f"Type {py_type} is not supported by PySpark")
+
+
+    @classmethod
+    def create_spark_dataframe(cls, data: List['PySparkBaseModel'], spark: SparkSession) -> DataFrame:
+        """
+        Creates a PySpark DataFrame from a list of Pydantic models.
+
+        :param data: A list of Pydantic models.
+        :param spark: A PySpark SparkSession.
+        :return: A PySpark DataFrame.
+        """
+        # Generate schema based on base model
+        schema = cls.schema()
+
+        # Convert Pydantic models to dictionaries
+        data_dicts = [item.dict() for item in data]
+
+        # Create Spark DataFrame from list of dictionaries and schema
+        df = spark.createDataFrame(data_dicts, schema)
+
+        return df
