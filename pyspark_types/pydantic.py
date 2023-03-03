@@ -37,7 +37,13 @@ class PySparkBaseModel(BaseModel):
 
     @classmethod
     def is_pyspark_basemodel_type(cls, t: Type) -> bool:
-        return isinstance(t, type) and issubclass(t, PySparkBaseModel)
+        if isinstance(t, type):
+            if t.__module__ == 'builtins':
+                return False
+            else:
+                return issubclass(t, PySparkBaseModel)
+        else:
+            return False
 
     @classmethod
     def is_optional_pyspark_basemodel_type(cls, t: Type) -> bool:
@@ -222,9 +228,9 @@ class PySparkBaseModel(BaseModel):
         schema = cls.schema()
 
         # Convert Pydantic models to dictionaries
-        data_dicts = [item.dict() for item in data]
+        data_rows = [tuple(item.dict().values()) for item in data]
 
         # Create Spark DataFrame from list of dictionaries and schema
-        df = spark.createDataFrame(data_dicts, schema)
+        df = spark.createDataFrame(data_rows, schema)
 
         return df

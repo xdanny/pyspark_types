@@ -10,7 +10,6 @@ PySparkBaseModel is a base class for PySpark models that provides methods for co
 Here's an example of a Pydantic model that will be used to create a PySpark DataFrame:
 
 ```python
-from pydantic import BaseModel
 from pyspark_types.auxiliary import BoundDecimal
 from pyspark_types.pydantic import PySparkBaseModel
 
@@ -27,7 +26,6 @@ To create a PySpark DataFrame from a list of Person Pydantic models, we can use 
 
 ```python
 from pyspark.sql import SparkSession
-
 
 spark = SparkSession.builder.appName("MyApp").getOrCreate()
 
