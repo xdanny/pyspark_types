@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "pyspark-types"
-version = "0.1.0"
-description = ""
+version = "0.0.1"
+description = "`pyspark_types` is a Python library that provides a simple way to map Python dataclasses to PySpark StructTypes"
 authors = ["Dan"]
 readme = "README.md"
-packages = [{include = "pyspark-types"}]
+packages = [{include = "pyspark_types"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"

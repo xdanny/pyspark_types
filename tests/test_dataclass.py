@@ -63,5 +63,4 @@ def test_map_dataclass_with_list_of_dataclasses():
         ]
     )
     result_struct = map_dataclass_to_struct(OuterDataClass)
-    print(result_struct)
     assert result_struct == expected_struct
