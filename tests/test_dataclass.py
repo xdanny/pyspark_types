@@ -1,3 +1,5 @@
+import datetime
+
 from pyspark.sql.types import (
     StructType,
     StructField,
@@ -6,6 +8,7 @@ from pyspark.sql.types import (
     LongType,
     DecimalType,
     ArrayType,
+    DateType,
 )
 from typing import List, Optional
 from dataclasses import dataclass
@@ -28,6 +31,7 @@ class OuterDataClass:
     field1: int
     field2: Optional[str]
     field3: List[InnerDataClass]
+    field4: datetime.date
 
 
 def test_map_simple_dataclass():
@@ -60,6 +64,7 @@ def test_map_dataclass_with_list_of_dataclasses():
                 ),
                 False,
             ),
+            StructField("field4", DateType(), False),
         ]
     )
     result_struct = map_dataclass_to_struct(OuterDataClass)

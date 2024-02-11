@@ -155,37 +155,6 @@ def apply_nullability(dtype: DataType, is_nullable: bool) -> DataType:
     else:
         return dtype
 
-
-def get_spark_type(py_type: Type) -> DataType:
-    """
-    Creates a mapping from a python type to a pyspark data type
-    :param py_type:
-    :return:
-    """
-    if py_type == str:
-        return StringType()
-    elif py_type == int:
-        return IntegerType()
-    elif py_type == LongT:
-        return LongType()
-    elif py_type == ShortT:
-        return ShortType()
-    elif py_type == ByteT:
-        return ByteType()
-    elif py_type == float:
-        return DoubleType()
-    elif py_type == bool:
-        return BooleanType()
-    elif isinstance(py_type, type) and issubclass(py_type, BoundDecimal):
-        return DecimalType(precision=py_type.precision, scale=py_type.scale)
-    elif is_optional_type(py_type):
-        elem_type = py_type.__args__[0]
-        spark_type = get_spark_type(elem_type)
-        return spark_type
-    else:
-        raise Exception(f"Type {py_type} is not supported by PySpark")
-
-
 def is_optional_type(py_type: Type) -> bool:
     """
     Returns True if the given type is an Optional type.

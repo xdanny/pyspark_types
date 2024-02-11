@@ -1,4 +1,5 @@
 import typing
+import datetime
 from typing import Type, Union, get_type_hints, get_origin, get_args, List
 from pydantic import BaseModel
 from pyspark.sql.types import *
@@ -53,31 +54,6 @@ class PySparkBaseModel(BaseModel):
             and get_args(t)[1] is type(None)
             and cls.is_pyspark_basemodel_type(get_args(t)[0])
         )
-
-    @classmethod
-    def get_spark_type(cls, py_type: Type) -> DataType:
-        """
-        Creates a mapping from a python type to a pyspark data type
-        :param py_type:
-        :return:
-        """
-        if py_type == str:
-            return StringType()
-        elif py_type == int:
-            return IntegerType()
-        elif py_type == LongT:
-            return LongType()
-        elif py_type == ShortT:
-            return ShortType()
-        elif py_type == ByteT:
-            return ByteType()
-        elif py_type == float:
-            return DoubleType()
-        elif py_type == bool:
-            return BooleanType()
-        elif isinstance(py_type, type) and issubclass(py_type, BoundDecimal):
-            return DecimalType(precision=py_type.precision, scale=py_type.scale)
-        raise Exception(f"Type {py_type} is not supported by PySpark")
 
     @classmethod
     def _get_struct_field(
@@ -190,9 +166,7 @@ class PySparkBaseModel(BaseModel):
         :param py_type:
         :return:
         """
-        if py_type is None:
-            return NullType()
-        elif py_type == str:
+        if py_type == str:
             return StringType()
         elif py_type == int:
             return IntegerType()
@@ -204,6 +178,10 @@ class PySparkBaseModel(BaseModel):
             return ByteType()
         elif py_type == float:
             return DoubleType()
+        elif py_type == datetime.datetime:
+            return TimestampType()
+        elif py_type == datetime.date:
+            return DateType()
         elif py_type == bool:
             return BooleanType()
         elif isinstance(py_type, type) and issubclass(py_type, BoundDecimal):
@@ -212,7 +190,8 @@ class PySparkBaseModel(BaseModel):
             elem_type = py_type.__args__[0]
             spark_type = cls.get_spark_type(elem_type)
             return spark_type
-        raise Exception(f"Type {py_type} is not supported by PySpark")
+        else:
+            raise Exception(f"Type {py_type} is not supported by PySpark")
 
 
     @classmethod
