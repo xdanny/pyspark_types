@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyspark-types"
-version = "0.0.2"
+version = "0.0.3"
 description = "`pyspark_types` is a Python library that provides a simple way to map Python dataclasses to PySpark StructTypes"
 authors = ["Dan"]
 readme = "README.md"
