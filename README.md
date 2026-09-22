@@ -1,3 +1,5 @@
+
+
 # PySpark Types
 
 `pyspark_types` is a Python library that provides a simple way to map Python dataclasses to PySpark StructTypes.
@@ -66,9 +68,9 @@ Output:
 
 The PySparkBaseModel.create_spark_dataframe() method converts the list of Pydantic models to a list of dictionaries, and then creates a PySpark DataFrame from the list of dictionaries and schema generated from the Pydantic model.
 
-You can also generate a schema based on a Pydantic model by calling the PySparkBaseModel.schema() method:
+You can also generate a schema based on a Pydantic model by calling the Person.schema() method:
 ```python
-schema = PySparkBaseModel.schema(Person)
+schema = Person.schema()
 
 ```
 
